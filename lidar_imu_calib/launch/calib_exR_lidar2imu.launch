@@ -1,7 +1,8 @@
 <launch>
     <node pkg="lidar_imu_calib" type="calib_exR_lidar2imu_node" name="calib_exR_lidar2imu_node" output="screen">
-        <param name="/lidar_topic" value="/ns2/rslidar_points"/>
-        <param name="/imu_topic" value="/imu"/>
-        <param name="/bag_file" value="/home/cn/file/data/auto_scanner/calib_2lidar_imu/calib_horizon_lidar.bag"/>
+        <param name="/lidar_topic" value="/kiss/odometry"/>
+        <param name="/imu_topic" value="/mavros/imu/data"/>
+        <!-- <param name="/bag_file" value="/root/catkin_ws/08-21-florida/csv/calib/2025-08-30-23-07-01.bag"/> -->
+        <param name="/bag_file" value="/root/catkin_ws/08-21-florida/csv/calib/2025-08-30-23-07-01.bag"/>
     </node>
 </launch>

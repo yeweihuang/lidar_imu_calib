@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <nav_msgs/Odometry.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <queue>
 #include <time.h>
@@ -66,16 +67,29 @@ int main(int argc, char **argv)
     foreach (rosbag::MessageInstance const m, view)
     {
         // add lidar msg
-        sensor_msgs::PointCloud2ConstPtr lidar_msg = m.instantiate<sensor_msgs::PointCloud2>();
-        if (lidar_msg != NULL)
+        // sensor_msgs::PointCloud2ConstPtr lidar_msg = m.instantiate<sensor_msgs::PointCloud2>();
+        nav_msgs::OdometryConstPtr odom_msg = m.instantiate<nav_msgs::Odometry>();
+        if (odom_msg != NULL)
         {
             ROS_INFO_STREAM_THROTTLE(5.0, "add lidar msg ......");
 
             CloudT::Ptr cloud(new CloudT);
-            pcl::fromROSMsg(*lidar_msg, *cloud);
+            // pcl::fromROSMsg(*lidar_msg, *cloud);
             LidarData data;
-            data.cloud = cloud;
-            data.stamp = lidar_msg->header.stamp.toSec();
+            // data.cloud = cloud;
+            data.stamp = odom_msg->header.stamp.toSec();
+            // ros pose to Matrix4d
+            data.T = Eigen::Matrix4d::Identity();
+            data.T.block<3, 3>(0, 0) = Eigen::Quaterniond(odom_msg->pose.pose.orientation.w,
+                                                         odom_msg->pose.pose.orientation.x,
+                                                         odom_msg->pose.pose.orientation.y,
+                                                         odom_msg->pose.pose.orientation.z)
+                                            .toRotationMatrix();
+            data.T(0, 3) = odom_msg->pose.pose.position.x;
+            data.T(1, 3) = odom_msg->pose.pose.position.y;
+            data.T(2, 3) = odom_msg->pose.pose.position.z;
+            // print the received and processed lidar pose
+            // cout << "Received lidar pose: "  << data.T << endl;
             caliber.addLidarData(data);
         }
 

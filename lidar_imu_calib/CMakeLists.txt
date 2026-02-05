@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(lidar_imu_calib)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 add_compile_options(-o3)
 
 ## Find catkin macros and libraries

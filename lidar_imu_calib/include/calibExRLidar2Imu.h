@@ -23,6 +23,9 @@ struct LidarData
 {
     double stamp;
     CloudT::Ptr cloud;
+    // save pose
+    Eigen::Matrix4d T; 
+
 };
 
 struct LidarFrame
@@ -61,7 +64,7 @@ public:
     void addImuData(const ImuData &data);
 
     //@brief: integration imu data, align lidar odom and imu
-    Eigen::Vector3d calib(bool integration = false);
+    Eigen::Vector3d calib(bool integration = true);
 
 private:
     //@brief: interpolated attitude from start attitude to end attitude by scale
@@ -73,6 +76,7 @@ private:
     //@brief: solve least square answer by constraints
     Eigen::Quaterniond solve(const vector<pair<Eigen::Quaterniond, Eigen::Quaterniond>> &corres);
 
+    bool initialized = false;
     Eigen::Vector3d init_R_{0.0, 0.0, 0.0};
     CloudT::Ptr last_lidar_cloud_{nullptr};                                 // last lidar cloud
     vector<LidarFrame> lidar_buffer_;                                       // record relative transform between neighbor lidar frame

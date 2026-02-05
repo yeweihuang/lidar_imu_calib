@@ -32,11 +32,11 @@ void CalibExRLidarImu::setInitExR(Eigen::Vector3d init_R)
 
 void CalibExRLidarImu::addLidarData(const LidarData &data)
 {
-    if (!data.cloud || data.cloud->size() == 0)
-    {
-        cout << "no cloud in lidar data !!!" << endl;
-        return;
-    }
+    // if (!data.cloud || data.cloud->size() == 0)
+    // {
+        // cout << "no cloud in lidar data !!!" << endl;
+        // return;
+    // }
 
     if (!register_)
     {
@@ -46,7 +46,7 @@ void CalibExRLidarImu::addLidarData(const LidarData &data)
 
 #if USE_SCAN_2_MAP
     //downsample lidar cloud for save align time
-    CloudT::Ptr downed_cloud(new CloudT);
+    /*CloudT::Ptr downed_cloud(new CloudT);
     downer_.setInputCloud(data.cloud);
     downer_.filter(*downed_cloud);
 
@@ -57,10 +57,11 @@ void CalibExRLidarImu::addLidarData(const LidarData &data)
 
         LidarFrame frame;
         frame.stamp = data.stamp;
-        frame.T = Eigen::Matrix4d::Identity();
-        frame.gT = Eigen::Matrix4d::Identity();
-        frame.cloud = downed_cloud;
-        lidar_buffer_.push_back(move(frame));
+        frame.T = data.T;
+        // frame.T = Eigen::Matrix4d::Identity();
+        // frame.gT = Eigen::Matrix4d::Identity();
+        // frame.cloud = downed_cloud;
+        // lidar_buffer_.push_back(move(frame));
 
         return;
     }
@@ -81,19 +82,33 @@ void CalibExRLidarImu::addLidarData(const LidarData &data)
         cout << "register cant converge, please check initial value !!!" << endl;
         return;
     }
-    Eigen::Matrix4d T_l_m = (register_->getFinalTransformation()).cast<double>();
+    Eigen::Matrix4d T_l_m = (register_->getFinalTransformation()).cast<double>();*/
+    if (!initialized)
+    {
+        initialized = true;
+        LidarFrame frame;
+        frame.stamp = data.stamp;
+        frame.T = Eigen::Matrix4d::Identity();
+        frame.gT = data.T;
+        lidar_buffer_.push_back(move(frame));
+        cout << "Lidar frame transform: " << frame.gT << endl;
+        return;
 
+    }
+    Eigen::Matrix4d T_l_m = data.T;
+
+    
     // generate lidar frame
     LidarFrame frame;
     frame.stamp = data.stamp;
     frame.gT = T_l_m;
     Eigen::Matrix4d last_T_l_m = lidar_buffer_.back().gT;
     frame.T = last_T_l_m.inverse() * T_l_m;
-    frame.cloud = downed_cloud;
+    // frame.cloud = downed_cloud;
     lidar_buffer_.push_back(move(frame));
 
     // update local map
-    *local_map_ += *aligned;
+    // *local_map_ += *aligned;
 #else
     // init first lidar frame and set it as zero pose
     if (!last_lidar_cloud_)
@@ -407,9 +422,12 @@ Eigen::Vector3d CalibExRLidarImu::calib(bool integration)
         corres1_ = corres;
     }
     q_l_b_ = solve(corres);
+    q_l_b_ = solve(corres);
+    // std::cout << "initial exR (rpy): " << q_l_b_.toRotationMatrix().eulerAngles(0, 1, 2).transpose() << std::endl;
 
     // optimize: use initial result to estimate transform between neighbor lidar frame for improving matching precise
-    optimize();
+    // optimize();
+
 
     // get result
     tf::Matrix3x3 mat(tf::Quaternion(q_l_b_.x(), q_l_b_.y(), q_l_b_.z(), q_l_b_.w()));
